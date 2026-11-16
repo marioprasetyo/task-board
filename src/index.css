@@ -1,3 +1,25 @@
+@import "tailwindcss";
+
+/* T-004. Tailwind v4 design tokens, from UI Skills: tokens for type, colour,
+   spacing, and iconography, so the system stays consistent.
+   One palette, dark Nomi theme, light high-contrast text. One colour per
+   status: Done green, Working yellow, Blocked red, Ready for Review blue,
+   Todo grey. */
+@theme {
+  --color-bg: #0b0d10;
+  --color-panel: #15181d;
+  --color-card: #1c2026;
+  --color-border: #2a2f37;
+  --color-ink: #f2f4f7;
+  --color-muted: #9aa3ad;
+  --color-done: #22c55e;
+  --color-working: #eab308;
+  --color-blocked: #ef4444;
+  --color-review: #3b82f6;
+  --color-todo: #9aa3ad;
+  --font-sans: system-ui, -apple-system, sans-serif;
+}
+
 :root { --bg:#0b0d10; --panel:#15181d; --card:#1c2026; --border:#2a2f37; --text:#f2f4f7; --muted:#9aa3ad; --green:#22c55e; --yellow:#eab308; --red:#ef4444; --blue:#3b82f6; --grey:#9aa3ad; }
 * { box-sizing:border-box; }
 body { font-family:system-ui,-apple-system,sans-serif; margin:0; color:var(--text); background:var(--bg); }
@@ -7,27 +29,12 @@ p.sub { color:var(--muted); margin:0 0 12px; font-size:14px; }
 #banner { display:none; background:#3a2a00; border:1px solid var(--yellow); color:#fde68a; padding:10px 12px; border-radius:10px; margin-bottom:16px; font-size:13px; line-height:1.5; }
 #banner.show { display:block; }
 #settings { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:16px; font-size:13px; }
-button { background:var(--text); color:#0b0d10; border:0; border-radius:8px; padding:8px 12px; font-weight:700; cursor:pointer; }
-button.ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
-button.danger { background:var(--red); color:#fff; }
 .board { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; align-items:start; }
 .col { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; min-height:200px; }
 .col.drag-over { border-color:var(--yellow); }
 .col h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; display:flex; align-items:center; gap:8px; }
 .dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex:none; }
 .dot-green { background:var(--green); } .dot-yellow { background:var(--yellow); } .dot-red { background:var(--red); } .dot-blue { background:var(--blue); } .dot-grey { background:var(--grey); }
-.card { background:var(--card); border:1px solid var(--border); border-left:4px solid var(--muted); border-radius:10px; padding:12px; margin-bottom:12px; cursor:grab; }
-.card.done { border-left-color:var(--green); } .card.working { border-left-color:var(--yellow); } .card.blocked { border-left-color:var(--red); } .card.review { border-left-color:var(--blue); } .card.todo { border-left-color:var(--grey); }
-.row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.id { font-weight:800; font-size:15px; }
-.status { font-size:12px; font-weight:700; padding:2px 8px; border-radius:999px; color:#0b0d10; }
-.status-done { background:var(--green); } .status-working { background:var(--yellow); } .status-blocked { background:var(--red); color:#fff; } .status-review { background:var(--blue); color:#fff; } .status-todo { background:var(--grey); }
-.title { font-weight:600; margin:10px 0 8px; line-height:1.4; }
-dl { margin:0; font-size:13px; line-height:1.55; }
-dt { font-weight:600; display:inline; color:var(--muted); } dd { display:inline; margin:0; } dd:after { content:""; display:block; }
-.actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
-.actions button { padding:6px 10px; font-size:12px; }
-.actions select { padding:6px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:12px; }
 form.panel { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:20px; }
 form.panel input, form.panel select { width:100%; padding:8px; margin:6px 0; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); }
 footer { margin-top:20px; font-size:12px; color:var(--muted); line-height:1.6; }
