@@ -74,8 +74,9 @@ const MGMT_URL = 'https://api.supabase.com/v1/projects/' + PROJECT_REF + '/datab
 const FULL_SQL = `-- T-004 Supabase tickets table
 -- Run via the SQL editor page, Management API, project https://mezmipuyoedxgeszublx.supabase.co
 -- Do not use the Supabase dashboard SQL Editor, per Mario, 2026-11-17.
--- Then enable Realtime on public.tickets in Database, Replication.
--- Five statuses only, no more: Todo, Working, Blocked, Ready for Review, Done.
+-- Then enable Realtime on public.tickets in Database, Replication, or press
+-- Enable Realtime below, which runs the two statements at the end of this
+-- file. Five statuses only, no more: Todo, Working, Blocked, Ready for Review, Done.
 -- Source: ~/workspace/team/board.md, via Rapi, updated 2026-11-17.
 
 create table if not exists public.tickets (
@@ -95,6 +96,12 @@ create policy "Public write" on public.tickets for insert with check (true);
 create policy "Public update" on public.tickets for update using (true) with check (true);
 create policy "Public delete" on public.tickets for delete using (true);
 
+-- Realtime, T-004: the board subscribes to postgres_changes on
+-- public.tickets. Without this, a change in Supabase never reaches an open
+-- board. Replica identity full so UPDATE and DELETE events carry the old record.
+alter publication supabase_realtime add table public.tickets;
+alter table public.tickets replica identity full;
+
 -- Seed T-001 to T-005 from ~/workspace/team/board.md
 -- Five statuses only: Todo, Working, Blocked, Ready for Review, Done.
 insert into public.tickets (ticket_id, title, owner, rung, status, block_reason) values
@@ -107,7 +114,7 @@ on conflict (ticket_id) do nothing;`;
 const CALL_1 = `create table if not exists public.tickets (id bigint generated always as identity primary key, ticket_id text unique not null, title text not null, owner text, rung text, status text not null check (status in ('Todo', 'Working', 'Blocked', 'Ready for Review', 'Done')), block_reason text, created_at timestamptz default now(), updated_at timestamptz default now());`;
 const CALL_2 = `alter table public.tickets enable row level security; create policy "Public read" on public.tickets for select using (true); create policy "Public write" on public.tickets for insert with check (true); create policy "Public update" on public.tickets for update using (true) with check (true); create policy "Public delete" on public.tickets for delete using (true);`;
 const CALL_3 = `insert into public.tickets (ticket_id, title, owner, rung, status, block_reason) values ('T-001', 'Team rules', 'Nara', 'DRAFT', 'Done', ''), ('T-002', 'Verify tool for nomi-prototype', 'subagent', 'DRAFT', 'Blocked', 'GitHub App no write access to marioprasetyo/nomi-prototype, 403 on branch creation'), ('T-003', 'Chief of Staff', 'main agent', 'DRAFT', 'Working', ''), ('T-004', 'Visual task board', 'Nara routes, Rapi owns board data, Bantu builds visual', 'DRAFT', 'Working', 'Learning done, 9 sources, now implementing'), ('T-005', 'Design system component, Task Row / Ticket Card, React, free and payable', 'Nara routes, Jelajah learns, Bantu builds', 'DRAFT', 'Working', 'Phase 1 critique score 0-100 pass 80+ up to 3 rounds, Phase 2 Mario review, Phase 3 wrap and docs if Mario confirms') on conflict (ticket_id) do nothing;`;
-const REALTIME_SQL = `alter publication supabase_realtime add table public.tickets;`;
+const REALTIME_SQL = `alter publication supabase_realtime add table public.tickets; alter table public.tickets replica identity full;`;
 const CHECK_SQL = `select ticket_id, status from public.tickets order by ticket_id;`;
 const resultEl = document.getElementById('result');
 function show(text, cls){ resultEl.textContent = text; resultEl.className = cls || ''; }
