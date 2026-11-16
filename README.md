@@ -1,12 +1,18 @@
 # Task board — Mario
 
-T-004. A proper site, Vite + React, not a single static HTML file. The kanban
-reads tickets from Supabase, table `public.tickets`, project
+T-004. A proper site, Vite + React + TypeScript, Tailwind v4, shadcn/ui where
+it fits, not a single static HTML file. The kanban reads tickets from
+Supabase, table `public.tickets`, project
 `https://mezmipuyoedxgeszublx.supabase.co`, five statuses only: Todo, Working,
 Blocked, Ready for Review, Done. Drag and drop, add / edit / delete, Realtime.
 
 Live: https://task-board-nine-steel.vercel.app/
 Repo: https://github.com/marioprasetyo/task-board
+
+Design: Taste Skill app-screen route — quiet panels, aligned figures, colour
+spent on data. One palette, dark Nomi theme. Tailwind v4 tokens for type,
+colour, spacing, and iconography. Task Row is `src/components/TaskRow.tsx`,
+TypeScript types, built on shadcn/ui Button and Badge.
 
 ## Run it
 
