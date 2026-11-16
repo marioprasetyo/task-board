@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase, supabaseConfigured, supabaseUrl } from './lib/supabase'
 import type { Rung, Status, Ticket } from './lib/supabase'
 import { RUNGS, STATUSES } from './lib/supabase'
-import TaskRow, { liveStatusFor } from './components/TaskRow'
+import TaskRow, { liveStatusFor, TaskRowSkeleton } from './components/TaskRow'
 import { Button } from './components/ui/button'
 
 // T-004. Task board — Mario. Vite + React + TypeScript, Tailwind v4,
@@ -34,15 +34,21 @@ function nextTicketId(tickets: Ticket[]): string {
 
 export default function App() {
   const [tickets, setTickets] = useState<Ticket[]>([])
+  const [loading, setLoading] = useState(true)
   const [connStatus, setConnStatus] = useState('Checking…')
   const [banner, setBanner] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
   const [dragOver, setDragOver] = useState('')
+  const [filter, setFilter] = useState<'All' | Status>('All')
+  const [justDoneId, setJustDoneId] = useState<string | null>(null)
+  const editFormRef = useRef<HTMLFormElement | null>(null)
+  const justDoneTimer = useRef<number | undefined>(undefined)
 
   const load = useCallback(async () => {
     if (!supabaseConfigured || !supabase) {
       setTickets([])
+      setLoading(false)
       setConnStatus('Not live: Supabase env vars are not set in Vercel.')
       setBanner(
         'Supabase is not connected. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel, or check that the Supabase integration set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, then redeploy. No key is typed in the browser.',
@@ -53,6 +59,7 @@ export default function App() {
       .from('tickets')
       .select('*')
       .order('created_at', { ascending: true })
+    setLoading(false)
     if (error) {
       setTickets([])
       setConnStatus('Not live: ' + error.message)
@@ -94,6 +101,11 @@ export default function App() {
       setBanner('Save failed: ' + error.message + '. The card stays where it was.')
       return
     }
+    if (status === 'Done') {
+      setJustDoneId(id)
+      window.clearTimeout(justDoneTimer.current)
+      justDoneTimer.current = window.setTimeout(() => setJustDoneId(null), 1500)
+    }
     await load()
   }
 
@@ -106,6 +118,9 @@ export default function App() {
       status: t.status,
       block_reason: t.block_reason || '',
     })
+    window.setTimeout(() => {
+      editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 0)
   }
 
   async function saveEdit(e: React.FormEvent) {
@@ -197,11 +212,37 @@ export default function App() {
         The publishable key comes from Vercel env vars, never typed in this browser and
         never in the repo.
       </div>
+      <div
+        className="flex gap-2 flex-wrap mb-4"
+        role="group"
+        aria-label="Filter tickets by status"
+      >
+        {(['All', ...STATUSES] as const).map((s) => {
+          const count = s === 'All' ? tickets.length : tickets.filter((t) => t.status === s).length
+          const active = filter === s
+          return (
+            <Button
+              key={s}
+              variant={active ? 'default' : 'ghost'}
+              size="sm"
+              type="button"
+              aria-pressed={active}
+              onClick={() => setFilter(active ? 'All' : s)}
+            >
+              {s} ({count})
+            </Button>
+          )
+        })}
+      </div>
       <div className="board">
         {STATUSES.map((status) => (
           <section
             key={status}
-            className={'col' + (dragOver === status ? ' drag-over' : '')}
+            className={
+              'col' +
+              (dragOver === status ? ' drag-over' : '') +
+              (filter !== 'All' && filter !== status ? ' opacity-40' : '')
+            }
             data-status={status}
             onDragOver={(e) => {
               e.preventDefault()
@@ -219,29 +260,37 @@ export default function App() {
               {status}
             </h2>
             <div className="cards">
-              {tickets
-                .filter((t) => t.status === status)
-                .map((t) => (
-                  <TaskRow
-                    key={t.ticket_id}
-                    id={t.ticket_id}
-                    title={t.title}
-                    owner={t.owner || ''}
-                    rung={t.rung || ''}
-                    status={t.status}
-                    liveStatus={liveStatusFor(t.status)}
-                    blockReason={t.block_reason || undefined}
-                    onChangeStatus={changeStatus}
-                    onEdit={() => openEdit(t)}
-                  />
-                ))}
+              {loading ? (
+                <>
+                  <TaskRowSkeleton />
+                  <TaskRowSkeleton />
+                </>
+              ) : (
+                tickets
+                  .filter((t) => t.status === status)
+                  .map((t) => (
+                    <TaskRow
+                      key={t.ticket_id}
+                      id={t.ticket_id}
+                      title={t.title}
+                      owner={t.owner || ''}
+                      rung={t.rung || ''}
+                      status={t.status}
+                      liveStatus={liveStatusFor(t.status)}
+                      blockReason={t.block_reason || undefined}
+                      justCompleted={justDoneId === t.ticket_id}
+                      onChangeStatus={changeStatus}
+                      onEdit={() => openEdit(t)}
+                    />
+                  ))
+              )}
             </div>
           </section>
         ))}
       </div>
 
       {editing && editForm && (
-        <form className="panel show" onSubmit={saveEdit}>
+        <form ref={editFormRef} className="panel show" onSubmit={saveEdit}>
           <strong>
             Edit ticket <span>{editing}</span>
           </strong>
