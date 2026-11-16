@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL editor — T-004 tickets</title>
+<style>
+  :root { --bg:#0b0d10; --panel:#15181d; --card:#1c2026; --border:#2a2f37; --text:#f2f4f7; --muted:#9aa3ad; --green:#22c55e; --yellow:#eab308; --red:#ef4444; --blue:#3b82f6; }
+  * { box-sizing:border-box; }
+  body { font-family:system-ui,-apple-system,sans-serif; margin:0; color:var(--text); background:var(--bg); }
+  main { max-width:900px; margin:0 auto; padding:24px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  p.sub { color:var(--muted); margin:0 0 12px; font-size:14px; line-height:1.6; }
+  .panel { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:16px; }
+  label { font-weight:700; font-size:13px; display:block; margin:8px 0 4px; }
+  input, textarea { width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); font-family:ui-monospace,monospace; font-size:13px; }
+  textarea { min-height:340px; line-height:1.5; }
+  button { background:var(--text); color:#0b0d10; border:0; border-radius:8px; padding:10px 14px; font-weight:700; cursor:pointer; margin:6px 6px 0 0; }
+  button.ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+  button.blue { background:var(--blue); color:#fff; }
+  button:disabled { opacity:.5; cursor:wait; }
+  #result { white-space:pre-wrap; word-break:break-word; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; font-family:ui-monospace,monospace; font-size:13px; line-height:1.5; min-height:80px; }
+  .ok { color:var(--green); } .err { color:var(--red); } .warn { color:var(--yellow); }
+  footer { margin-top:20px; font-size:12px; color:var(--muted); line-height:1.6; }
+  @media (max-width:700px){ main{padding:16px;} }
+</style>
+</head>
+<body>
+<main>
+<h1>SQL editor — T-004 tickets</h1>
+<p class="sub">Mario — run the T-004 tickets SQL against Supabase project https://mezmipuyoedxgeszublx.supabase.co, project ref mezmipuyoedxgeszublx, without the Supabase dashboard SQL Editor. Five statuses only: Todo, Working, Blocked, Ready for Review, Done. Seed: T-001 Done, T-002 Blocked, T-003 Working, T-004 Working, T-005 Working.</p>
+
+<div class="panel">
+  <strong>1. Personal Access Token (PAT)</strong>
+  <p class="sub">The anon key is NOT enough to create a table. You need a Supabase Personal Access Token, scoped to project mezmipuyoedxgeszublx only, with Database Read-write only. Create it in Supabase Dashboard, access tokens settings. Paste it here once, it is stored only in this browser, never in code or in the repo. Do not paste it in chat.</p>
+  <label for="pat">Supabase PAT — Database Read-write, project mezmipuyoedxgeszublx only</label>
+  <input id="pat" type="password" placeholder="sbp_..." autocomplete="off">
+  <button id="save-pat">Save PAT in this browser</button>
+  <button id="clear-pat" class="ghost">Clear PAT</button>
+  <span id="pat-status"></span>
+</div>
+
+<div class="panel">
+  <strong>2. SQL — already loaded from ~/workspace/team/support/supabase-tickets.sql</strong>
+  <label for="sql">SQL to run</label>
+  <textarea id="sql"></textarea>
+  <button id="run-sql">Run SQL — create table, RLS, seed (3 calls)</button>
+  <button id="run-realtime" class="blue">Enable Realtime</button>
+  <button id="run-custom" class="ghost">Run custom SQL in the box above (1 call)</button>
+</div>
+
+<div class="panel">
+  <strong>3. Check the table</strong>
+  <p class="sub">Check first tries the Supabase REST list_tickets call, using the anon / publishable key saved in the kanban page, if any. If that key is not saved yet, Check uses the Management API with your PAT instead, read-only.</p>
+  <label for="anon-key">Supabase anon / publishable key — for Check via REST only, optional</label>
+  <input id="anon-key" type="password" placeholder="Supabase anon / publishable key" autocomplete="off">
+  <button id="save-anon">Save anon key in this browser</button>
+  <button id="check-table">Check table</button>
+</div>
+
+<div class="panel">
+  <strong>Result</strong>
+  <div id="result">Not run yet.</div>
+</div>
+
+<footer>
+Sources: ~/workspace/team/support/supabase-tickets.sql; ~/workspace/team/board.md, via Rapi; ~/workspace/team/explorations/jelajah-2026-11-17-kanban-live.md, Management API method, 2026-11-17; Supabase Management API POST /v1/projects/{ref}/database/query, experimental, Beta, 201 is success. No token or key in this code. Date: 2026-11-17.
+</footer>
+</main>
+<script>
+const PROJECT_REF = 'mezmipuyoedxgeszublx';
+const SUPABASE_URL = 'https://mezmipuyoedxgeszublx.supabase.co';
+const MGMT_URL = 'https://api.supabase.com/v1/projects/' + PROJECT_REF + '/database/query';
+const FULL_SQL = `-- T-004 Supabase tickets table
+-- Run via the SQL editor page, Management API, project https://mezmipuyoedxgeszublx.supabase.co
+-- Do not use the Supabase dashboard SQL Editor, per Mario, 2026-11-17.
+-- Then enable Realtime on public.tickets in Database, Replication.
+-- Five statuses only, no more: Todo, Working, Blocked, Ready for Review, Done.
+-- Source: ~/workspace/team/board.md, via Rapi, updated 2026-11-17.
+
+create table if not exists public.tickets (
+  id bigint generated always as identity primary key,
+  ticket_id text unique not null,
+  title text not null,
+  owner text,
+  rung text,
+  status text not null check (status in ('Todo', 'Working', 'Blocked', 'Ready for Review', 'Done')),
+  block_reason text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+alter table public.tickets enable row level security;
+create policy "Public read" on public.tickets for select using (true);
+create policy "Public write" on public.tickets for insert with check (true);
+create policy "Public update" on public.tickets for update using (true) with check (true);
+create policy "Public delete" on public.tickets for delete using (true);
+
+-- Seed T-001 to T-005 from ~/workspace/team/board.md
+-- Five statuses only: Todo, Working, Blocked, Ready for Review, Done.
+insert into public.tickets (ticket_id, title, owner, rung, status, block_reason) values
+  ('T-001', 'Team rules', 'Nara', 'DRAFT', 'Done', ''),
+  ('T-002', 'Verify tool for nomi-prototype', 'subagent', 'DRAFT', 'Blocked', 'GitHub App no write access to marioprasetyo/nomi-prototype, 403 on branch creation'),
+  ('T-003', 'Chief of Staff', 'main agent', 'DRAFT', 'Working', ''),
+  ('T-004', 'Visual task board', 'Nara routes, Rapi owns board data, Bantu builds visual', 'DRAFT', 'Working', 'Learning done, 9 sources, now implementing'),
+  ('T-005', 'Design system component, Task Row / Ticket Card, React, free and payable', 'Nara routes, Jelajah learns, Bantu builds', 'DRAFT', 'Working', 'Phase 1 critique score 0-100 pass 80+ up to 3 rounds, Phase 2 Mario review, Phase 3 wrap and docs if Mario confirms')
+on conflict (ticket_id) do nothing;`;
+const CALL_1 = `create table if not exists public.tickets (id bigint generated always as identity primary key, ticket_id text unique not null, title text not null, owner text, rung text, status text not null check (status in ('Todo', 'Working', 'Blocked', 'Ready for Review', 'Done')), block_reason text, created_at timestamptz default now(), updated_at timestamptz default now());`;
+const CALL_2 = `alter table public.tickets enable row level security; create policy "Public read" on public.tickets for select using (true); create policy "Public write" on public.tickets for insert with check (true); create policy "Public update" on public.tickets for update using (true) with check (true); create policy "Public delete" on public.tickets for delete using (true);`;
+const CALL_3 = `insert into public.tickets (ticket_id, title, owner, rung, status, block_reason) values ('T-001', 'Team rules', 'Nara', 'DRAFT', 'Done', ''), ('T-002', 'Verify tool for nomi-prototype', 'subagent', 'DRAFT', 'Blocked', 'GitHub App no write access to marioprasetyo/nomi-prototype, 403 on branch creation'), ('T-003', 'Chief of Staff', 'main agent', 'DRAFT', 'Working', ''), ('T-004', 'Visual task board', 'Nara routes, Rapi owns board data, Bantu builds visual', 'DRAFT', 'Working', 'Learning done, 9 sources, now implementing'), ('T-005', 'Design system component, Task Row / Ticket Card, React, free and payable', 'Nara routes, Jelajah learns, Bantu builds', 'DRAFT', 'Working', 'Phase 1 critique score 0-100 pass 80+ up to 3 rounds, Phase 2 Mario review, Phase 3 wrap and docs if Mario confirms') on conflict (ticket_id) do nothing;`;
+const REALTIME_SQL = `alter publication supabase_realtime add table public.tickets;`;
+const CHECK_SQL = `select ticket_id, status from public.tickets order by ticket_id;`;
+const resultEl = document.getElementById('result');
+function show(text, cls){ resultEl.textContent = text; resultEl.className = cls || ''; }
+function getPat(){ return localStorage.getItem('supabase_pat') || ''; }
+function getAnon(){ return localStorage.getItem('supabase_anon_key') || ''; }
+async function mgmtQuery(query, readOnly){
+  const pat = getPat();
+  if(!pat) throw new Error('No PAT saved yet. Paste your Supabase PAT above and press Save PAT.');
+  const res = await fetch(MGMT_URL, {method:'POST', headers:{'Authorization':'Bearer ' + pat, 'Content-Type':'application/json'}, body: JSON.stringify({query: query, read_only: !!readOnly})});
+  const text = await res.text();
+  let body = text;
+  try { body = JSON.stringify(JSON.parse(text), null, 2); } catch(e) {}
+  if(res.status === 201) return {ok:true, status: res.status, body: body};
+  throw new Error('HTTP ' + res.status + ': ' + body);
+}
+async function runAll(){
+  show('Running Call 1, create table…');
+  const steps = [['Call 1, create table', CALL_1, false], ['Call 2, RLS and policies', CALL_2, false], ['Call 3, seed T-001 to T-005', CALL_3, false]];
+  const out = [];
+  for(const [name, q, ro] of steps){
+    try {
+      const r = await mgmtQuery(q, ro);
+      out.push(name + ': OK, HTTP ' + r.status + '\n' + r.body);
+      show(out.join('\n\n'));
+    } catch(err) {
+      out.push(name + ': FAILED\n' + err.message);
+      show(out.join('\n\n'), 'err');
+      return;
+    }
+  }
+  show(out.join('\n\n') + '\n\nAll 3 calls OK. Now press Enable Realtime, then Check table.', 'ok');
+}
+document.getElementById('sql').value = FULL_SQL;
+document.getElementById('pat').value = getPat();
+document.getElementById('anon-key').value = getAnon();
+document.getElementById('pat-status').textContent = getPat() ? 'PAT saved in this browser.' : 'No PAT saved yet.';
+document.getElementById('save-pat').addEventListener('click', () => {
+  const v = document.getElementById('pat').value.trim();
+  if(v) localStorage.setItem('supabase_pat', v);
+  document.getElementById('pat-status').textContent = v ? 'PAT saved in this browser.' : 'No PAT saved yet.';
+});
+document.getElementById('clear-pat').addEventListener('click', () => { localStorage.removeItem('supabase_pat'); document.getElementById('pat').value = ''; document.getElementById('pat-status').textContent = 'PAT cleared.'; });
+document.getElementById('save-anon').addEventListener('click', () => {
+  const v = document.getElementById('anon-key').value.trim();
+  if(v) localStorage.setItem('supabase_anon_key', v);
+});
+document.getElementById('run-sql').addEventListener('click', async e => { e.target.disabled = true; try { await runAll(); } finally { e.target.disabled = false; } });
+document.getElementById('run-realtime').addEventListener('click', async e => {
+  e.target.disabled = true;
+  try {
+    const r = await mgmtQuery(REALTIME_SQL, false);
+    show('Enable Realtime: OK, HTTP ' + r.status + '\n' + r.body + '\n\nNow press Check table.', 'ok');
+  } catch(err) { show('Enable Realtime: FAILED\n' + err.message, 'err'); }
+  finally { e.target.disabled = false; }
+});
+document.getElementById('run-custom').addEventListener('click', async e => {
+  e.target.disabled = true;
+  const q = document.getElementById('sql').value;
+  try {
+    const r = await mgmtQuery(q, false);
+    show('Custom SQL: OK, HTTP ' + r.status + '\n' + r.body, 'ok');
+  } catch(err) { show('Custom SQL: FAILED\n' + err.message + '\n\nNote: the Management API takes one query string per call. If a multi-statement run fails, use Run SQL above, which splits it into 3 calls.', 'err'); }
+  finally { e.target.disabled = false; }
+});
+document.getElementById('check-table').addEventListener('click', async e => {
+  e.target.disabled = true;
+  const anon = getAnon();
+  if(anon){
+    try {
+      const res = await fetch(SUPABASE_URL + '/rest/v1/tickets?select=ticket_id,status&order=ticket_id.asc', {headers:{'apikey': anon, 'Authorization':'Bearer ' + anon}});
+      const text = await res.text();
+      if(res.ok){
+        show('Check via Supabase REST (list_tickets): OK, HTTP ' + res.status + '\n' + text, 'ok');
+      } else {
+        show('Check via Supabase REST: HTTP ' + res.status + '\n' + text + '\n\nTrying Check via Management API with PAT instead…');
+        const r = await mgmtQuery(CHECK_SQL, true);
+        show('Check via Management API: OK, HTTP ' + r.status + '\n' + r.body, 'ok');
+      }
+    } catch(err) { show('Check failed: ' + err.message, 'err'); }
+  } else {
+    try {
+      const r = await mgmtQuery(CHECK_SQL, true);
+      show('Check via Management API (no anon key saved, so REST check was skipped): OK, HTTP ' + r.status + '\n' + r.body + '\n\nExpected 5 rows: T-001 Done, T-002 Blocked, T-003 Working, T-004 Working, T-005 Working.', 'ok');
+    } catch(err) { show('Check failed: ' + err.message + '\n\nIf the table does not exist yet, press Run SQL above first.', 'err'); }
+  }
+  e.target.disabled = false;
+});
+</script>
+</body>
+</html>
