@@ -13,6 +13,12 @@ Design: Taste Skill app-screen route — quiet panels, aligned figures, colour
 spent on data. One palette, dark Nomi theme. Tailwind v4 tokens for type,
 colour, spacing, and iconography. Task Row is `src/components/TaskRow.tsx`,
 TypeScript types, built on shadcn/ui Button and Badge.
+Inspo reference: Linear, from inspomcp.dev — stark dark aesthetic, clean
+functional typography, content hierarchy, focused and efficient, a dark
+minimalist dashboard and issue tracker. The board copies its layout, palette,
+and type decisions, not its copy or brand. Loading uses a skeleton reveal,
+moving a ticket to Done shows a success check, and status chips filter the
+board, from Transitions.dev and Beautiful UI.
 
 ## Run it
 
