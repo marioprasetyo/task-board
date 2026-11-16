@@ -1,4 +1,4 @@
-import { Pencil } from 'lucide-react'
+import { Check, Pencil } from 'lucide-react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
@@ -40,8 +40,26 @@ export interface TaskRowProps {
   liveStatus: LiveStatus
   blockReason?: string
   proofUrl?: string
+  justCompleted?: boolean
   onChangeStatus: (id: string, status: Status) => void
   onEdit: () => void
+}
+
+// Skeleton card, from Transitions.dev skeleton-loader-and-reveal. Static
+// blocks, no shimmer animation, so the running pulse stays the one
+// animated element on the page. The reveal is the transition.
+export function TaskRowSkeleton() {
+  return (
+    <div
+      className="rounded-[10px] border border-border bg-card p-3 mb-3"
+      aria-hidden="true"
+    >
+      <div className="h-4 w-20 rounded bg-border" />
+      <div className="h-4 w-3/4 rounded bg-border mt-3" />
+      <div className="h-3 w-1/2 rounded bg-border mt-3" />
+      <div className="h-3 w-2/3 rounded bg-border mt-2" />
+    </div>
+  )
 }
 
 export default function TaskRow({
@@ -53,6 +71,7 @@ export default function TaskRow({
   liveStatus,
   blockReason,
   proofUrl,
+  justCompleted,
   onChangeStatus,
   onEdit,
 }: TaskRowProps) {
@@ -93,6 +112,16 @@ export default function TaskRow({
           title={`Live status: ${liveStatus}`}
         />
         <Badge variant={badgeVariantFor(status)}>{status}</Badge>
+        {justCompleted && (
+          <span
+            className="check-pop inline-flex items-center gap-1 text-[12px] font-bold text-done"
+            role="status"
+            aria-label={`${id} moved to Done`}
+          >
+            <Check aria-hidden className="size-4" />
+            Done
+          </span>
+        )}
       </div>
       <div className="font-semibold my-2.5 leading-snug">{title}</div>
       <div className="text-[13px] leading-relaxed">
