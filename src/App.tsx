@@ -37,6 +37,19 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [connStatus, setConnStatus] = useState('Checking…')
   const [realtime, setRealtime] = useState('Checking…')
+  const [testState, setTestState] = useState<'idle' | 'waiting' | 'received' | 'failed'>('idle')
+  const [testMsg, setTestMsg] = useState('')
+  const testTimer = useRef<number | undefined>(undefined)
+  const testStart = useRef(0)
+
+  // Visible Live dot, T-004: green when the channel is subscribed, red when
+  // it failed, grey while checking. Static, no pulse — the pulsing dot on a
+  // running TaskRow is already the one animated element on the page.
+  function realtimeDot(): string {
+    if (realtime.startsWith('Live')) return 'green'
+    if (realtime.startsWith('Not live')) return 'red'
+    return 'grey'
+  }
   const [banner, setBanner] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
@@ -105,6 +118,64 @@ export default function App() {
       client.removeChannel(channel)
     }
   }, [load])
+
+  // Test live updates, T-004: when the test is waiting and T-999 shows up in
+  // the tickets the Realtime event re-loaded, the live event arrived. The
+  // test never calls load() itself after the insert, so a missing event
+  // cannot be masked by a manual refresh.
+  useEffect(() => {
+    if (testState !== 'waiting') return
+    if (!tickets.some((t) => t.ticket_id === 'T-999')) return
+    window.clearTimeout(testTimer.current)
+    const elapsed = ((Date.now() - testStart.current) / 1000).toFixed(1)
+    setTestState('received')
+    setTestMsg('Live event received in ' + elapsed + 's. Removing the test ticket…')
+    if (!supabase) return
+    const client = supabase
+    client
+      .from('tickets')
+      .delete()
+      .eq('ticket_id', 'T-999')
+      .then(() => {
+        window.setTimeout(() => {
+          setTestMsg('Live event received in ' + elapsed + 's. Test ticket removed.')
+          void load()
+        }, 1000)
+      })
+  }, [tickets, testState, load])
+
+  async function runRealtimeTest() {
+    if (!supabaseConfigured || !supabase) {
+      setTestState('failed')
+      setTestMsg('Supabase is not connected yet. Set the env vars in Vercel first.')
+      return
+    }
+    setTestState('waiting')
+    setTestMsg('Adding test ticket T-999. Waiting for the live event…')
+    // Remove any leftover test ticket from an earlier run, then insert fresh.
+    await supabase.from('tickets').delete().eq('ticket_id', 'T-999')
+    const { error } = await supabase.from('tickets').insert({
+      ticket_id: 'T-999',
+      title: 'Realtime test — Bantu',
+      owner: 'Bantu',
+      rung: 'DRAFT',
+      status: 'Working',
+      block_reason: '',
+    })
+    if (error) {
+      window.clearTimeout(testTimer.current)
+      setTestState('failed')
+      setTestMsg('Test insert failed: ' + error.message)
+      return
+    }
+    testStart.current = Date.now()
+    testTimer.current = window.setTimeout(() => {
+      setTestState('failed')
+      setTestMsg(
+        'No live event in 10 seconds. Realtime is off for public.tickets — press Enable Realtime in the SQL editor page, or toggle it in Supabase Dashboard, Database, Replication, then try again.',
+      )
+    }, 10000)
+  }
 
   async function changeStatus(id: string, status: Status) {
     if (!STATUSES.includes(status)) return
@@ -227,7 +298,21 @@ export default function App() {
         <br />
         <span>{connStatus}</span>
         <br />
-        <span>Realtime: {realtime}</span>
+        <span className={'dot dot-' + realtimeDot()} aria-hidden="true"></span>{' '}
+        <span>
+          Realtime: {realtime}
+        </span>
+        <br />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={testState === 'waiting' || !supabaseConfigured}
+          onClick={runRealtimeTest}
+        >
+          {testState === 'waiting' ? 'Testing live updates…' : 'Test live updates'}
+        </Button>{' '}
+        {testMsg && <span>{testMsg}</span>}
         <br />
         The publishable key comes from Vercel env vars, never typed in this browser and
         never in the repo.
