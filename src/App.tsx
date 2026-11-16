@@ -36,6 +36,7 @@ export default function App() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [connStatus, setConnStatus] = useState('Checking…')
+  const [realtime, setRealtime] = useState('Checking…')
   const [banner, setBanner] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
@@ -79,10 +80,27 @@ export default function App() {
     load()
     if (!supabaseConfigured || !supabase) return undefined
     const client = supabase
+    // Realtime fix, T-004: subscribe with a status callback. Before this,
+    // the board said "Live" from the REST read alone, even if the channel
+    // failed or the table was not in the publication, and nothing showed it.
+    // SUBSCRIBED means the channel joined, not that the table is in the
+    // publication — only a live event proves that. A channel error, timeout,
+    // or close now says so on the board instead of failing silently.
     const channel = client
       .channel('tickets-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, load)
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setRealtime('Live: channel subscribed, updates arrive without refresh.')
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          setRealtime('Not live: Realtime channel ' + status + '.')
+          setBanner(
+            'Realtime is not connected (' +
+              status +
+              '). Changes from another browser will not appear until you refresh. Enable Realtime on public.tickets in Supabase, Database > Replication, or press Enable Realtime in the SQL editor page.',
+          )
+        }
+      })
     return () => {
       client.removeChannel(channel)
     }
@@ -208,6 +226,8 @@ export default function App() {
         Project: {supabaseUrl || 'https://mezmipuyoedxgeszublx.supabase.co'}
         <br />
         <span>{connStatus}</span>
+        <br />
+        <span>Realtime: {realtime}</span>
         <br />
         The publishable key comes from Vercel env vars, never typed in this browser and
         never in the repo.
