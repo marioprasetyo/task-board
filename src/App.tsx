@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase, supabaseConfigured, supabaseUrl } from './lib/supabase'
-import type { Rung, Status, Ticket } from './lib/supabase'
-import { RUNGS, STATUSES } from './lib/supabase'
+import type { Category, Rung, Status, Ticket } from './lib/supabase'
+import { CATEGORIES, RUNGS, STATUSES } from './lib/supabase'
 import TaskRow, { liveStatusFor, TaskRowSkeleton } from './components/TaskRow'
 import { Button } from './components/ui/button'
 
@@ -20,6 +20,7 @@ interface EditForm {
   owner: string
   rung: Rung | string
   status: Status
+  category: Category | string
   block_reason: string
 }
 
@@ -160,6 +161,7 @@ export default function App() {
       owner: 'Bantu',
       rung: 'DRAFT',
       status: 'Working',
+      category: 'Misc',
       block_reason: '',
     })
     if (error) {
@@ -205,6 +207,7 @@ export default function App() {
       owner: t.owner || '',
       rung: t.rung || 'DRAFT',
       status: t.status,
+      category: t.category || 'Misc',
       block_reason: t.block_reason || '',
     })
     window.setTimeout(() => {
@@ -220,6 +223,7 @@ export default function App() {
       owner: editForm.owner.trim(),
       rung: editForm.rung,
       status: editForm.status,
+      category: editForm.category,
       block_reason: editForm.block_reason.trim(),
     }
     if (!supabaseConfigured || !supabase) {
@@ -262,6 +266,7 @@ export default function App() {
       owner: String(f.get('owner')).trim(),
       rung: String(f.get('rung')),
       status: String(f.get('status')) as Status,
+      category: String(f.get('category') || 'Misc'),
       block_reason: String(f.get('block_reason')).trim(),
     }
     if (!supabaseConfigured || !supabase) {
@@ -381,6 +386,7 @@ export default function App() {
                       owner={t.owner || ''}
                       rung={t.rung || ''}
                       status={t.status}
+                      category={t.category || 'Misc'}
                       liveStatus={liveStatusFor(t.status)}
                       blockReason={t.block_reason || undefined}
                       justCompleted={justDoneId === t.ticket_id}
@@ -426,6 +432,15 @@ export default function App() {
               <option key={s}>{s}</option>
             ))}
           </select>
+          <select
+            value={editForm.category}
+            onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+            aria-label="Category"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
           <input
             placeholder="Block reason, if Blocked"
             value={editForm.block_reason}
@@ -464,6 +479,11 @@ export default function App() {
         <select name="status" defaultValue="Working">
           {STATUSES.map((s) => (
             <option key={s}>{s}</option>
+          ))}
+        </select>
+        <select name="category" defaultValue="Misc" aria-label="Category">
+          {CATEGORIES.map((c) => (
+            <option key={c}>{c}</option>
           ))}
         </select>
         <input name="block_reason" placeholder="Block reason, if Blocked" />
