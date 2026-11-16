@@ -13,6 +13,47 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 export type Status = 'Todo' | 'Working' | 'Blocked' | 'Ready for Review' | 'Done'
 export type Rung = 'DRAFT' | 'INVESTIGATE' | 'AUTOPILOT' | 'FULL AUTOPILOT'
 
+// Ticket categories, approved by Mario 2026-11-17, 17 total. Stored in
+// Supabase as public.tickets.category, text, default 'Misc'.
+export type Category =
+  | 'Product'
+  | 'Design'
+  | 'Dev'
+  | 'Team'
+  | 'Skill'
+  | 'Social'
+  | 'Explore'
+  | 'Finance'
+  | 'Misc'
+  | 'Marketing'
+  | 'Sales'
+  | 'Research'
+  | 'Content'
+  | 'Operations'
+  | 'Personal'
+  | 'Learning'
+  | 'Admin'
+
+export const CATEGORIES: Category[] = [
+  'Product',
+  'Design',
+  'Dev',
+  'Team',
+  'Skill',
+  'Social',
+  'Explore',
+  'Finance',
+  'Misc',
+  'Marketing',
+  'Sales',
+  'Research',
+  'Content',
+  'Operations',
+  'Personal',
+  'Learning',
+  'Admin',
+]
+
 export const STATUSES: Status[] = ['Todo', 'Working', 'Blocked', 'Ready for Review', 'Done']
 export const RUNGS: Rung[] = ['DRAFT', 'INVESTIGATE', 'AUTOPILOT', 'FULL AUTOPILOT']
 
@@ -23,6 +64,7 @@ export interface Ticket {
   owner: string | null
   rung: Rung | string | null
   status: Status
+  category: Category | string | null
   block_reason: string | null
   created_at?: string
   updated_at?: string
