@@ -49,6 +49,19 @@ npm run preview # serves dist/ locally
 Vercel detects Vite automatically: build command `npm run build`, output
 directory `dist`.
 
+## Auto-deploy
+
+Pushes to `main` do NOT auto-deploy to Vercel yet, because the GitHub repo
+is not linked to the Vercel project. Link it once in Vercel: open project
+`task-board-nine-steel`, Settings, Git, Connect GitHub repo
+`marioprasetyo/task-board`, branch `main`, build command `npm run build`,
+output directory `dist`. Vercel installs its GitHub App and creates the
+webhook, so every push to `main` deploys. Confirm the env vars above are set
+in Settings, Environment Variables, then redeploy. There is no token-free
+way to link it from the GitHub side alone: the webhook URL and secret are
+issued by Vercel when the repo is linked, and a GitHub Action deploy needs
+a Vercel token, which is never shared in chat.
+
 ## Pages
 
 - `/` — the board
