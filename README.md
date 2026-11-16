@@ -18,7 +18,12 @@ functional typography, content hierarchy, focused and efficient, a dark
 minimalist dashboard and issue tracker. The board copies its layout, palette,
 and type decisions, not its copy or brand. Loading uses a skeleton reveal,
 moving a ticket to Done shows a success check, and status chips filter the
-board, from Transitions.dev and Beautiful UI.
+board, from Transitions.dev and Beautiful UI. The connection panel shows a
+Realtime dot: green when the channel is subscribed, red when it failed, grey
+while checking, plus a Test live updates button. The test adds a test ticket
+T-999 and waits for the live event to bring it onto the board, then removes
+it. If no event arrives in 10 seconds, the test says Realtime is off for
+public.tickets and points to the SQL editor page.
 
 ## Run it
 
