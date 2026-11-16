@@ -2,7 +2,7 @@ import { Check, Pencil } from 'lucide-react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
-import type { Rung, Status } from '../lib/supabase'
+import type { Category, Rung, Status } from '../lib/supabase'
 import { STATUSES } from '../lib/supabase'
 
 // Task Row / Ticket Card. Single file, TypeScript types, no hard-coded
@@ -37,6 +37,7 @@ export interface TaskRowProps {
   owner: string
   rung: Rung | string
   status: Status
+  category: Category | string
   liveStatus: LiveStatus
   blockReason?: string
   proofUrl?: string
@@ -68,6 +69,7 @@ export default function TaskRow({
   owner,
   rung,
   status,
+  category,
   liveStatus,
   blockReason,
   proofUrl,
@@ -102,10 +104,16 @@ export default function TaskRow({
       draggable
       onDragStart={(e) => e.dataTransfer.setData('text/plain', id)}
       tabIndex={0}
-      aria-label={`${id}, ${title}, status ${status}`}
+      aria-label={`${id}, ${title}, category ${category}, status ${status}`}
     >
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-extrabold text-[15px]">{id}</span>
+        <span
+          className="rounded-md border border-border px-1.5 py-0.5 text-[11px] font-semibold text-muted"
+          title={`Category: ${category}`}
+        >
+          {category}
+        </span>
         <span
           className={cn('inline-block size-2.5 rounded-full', liveDot)}
           aria-label={`Live status: ${liveStatus}`}
