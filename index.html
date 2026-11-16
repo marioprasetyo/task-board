@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task board — Mario</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --panel: #15181d;
+    --card: #1c2026;
+    --border: #2a2f37;
+    --text: #f2f4f7;
+    --muted: #9aa3ad;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 0; color: var(--text); background: var(--bg); }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px; text-align: left; }
+  p.sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+  .col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .col h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+  .dot-green { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-red { background: var(--red); }
+  .card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--muted); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+  .card:last-child { margin-bottom: 0; }
+  .card.done { border-left-color: var(--green); }
+  .card.progress { border-left-color: var(--yellow); }
+  .card.blocked { border-left-color: var(--red); }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .id { font-weight: 800; font-size: 15px; }
+  .status { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: #0b0d10; }
+  .status-done { background: var(--green); }
+  .status-progress { background: var(--yellow); }
+  .status-blocked { background: var(--red); color: #fff; }
+  .title { font-weight: 600; margin: 10px 0 8px; line-height: 1.4; }
+  dl { margin: 0; font-size: 13px; line-height: 1.55; }
+  dt { font-weight: 600; display: inline; color: var(--muted); }
+  dd { display: inline; margin: 0; }
+  dd:after { content: ""; display: block; }
+  footer { margin-top: 20px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+  @media (max-width: 390px) {
+    main { padding: 12px; }
+    h1 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<main>
+<h1>Task board</h1>
+<p class="sub">Mario — what we are working on, where work is waiting, what happens next. T-004, rung DRAFT.</p>
+
+<div class="board">
+  <section class="col">
+    <h2><span class="dot dot-yellow"></span>In Progress</h2>
+    <article class="card progress">
+      <div class="row"><span class="id">T-003</span><span class="status status-progress">In progress</span></div>
+      <div class="title">Chief of Staff: main Muse is the only bot Mario talks to, routes via Nara, checks results before they reach Mario.</div>
+      <dl>
+        <dt>Owner:</dt> <dd>main agent</dd>
+        <dt>Rung:</dt> <dd>DRAFT</dd>
+        <dt>Status:</dt> <dd>In progress — listed in In progress in the board file, no done proof yet.</dd>
+      </dl>
+    </article>
+    <article class="card progress">
+      <div class="row"><span class="id">T-004</span><span class="status status-progress">In progress</span></div>
+      <div class="title">Visual task board so Mario can see jobs/tasks running.</div>
+      <dl>
+        <dt>Owner:</dt> <dd>Nara routes, Rapi owns board data, Bantu builds visual.</dd>
+        <dt>Rung:</dt> <dd>DRAFT</dd>
+        <dt>Status:</dt> <dd>In progress — learning done, 9 sources in Jelajah note at ~/workspace/team/explorations/jelajah-2026-11-17-design-skills.md. Now implementing, per Mario 2026-11-17 01:17 WIB.</dd>
+      </dl>
+    </article>
+    <article class="card progress">
+      <div class="row"><span class="id">T-005</span><span class="status status-progress">In progress</span></div>
+      <div class="title">Design system component, Task Row / Ticket Card, React, free and payable.</div>
+      <dl>
+        <dt>Owner:</dt> <dd>Nara routes, Jelajah learns, Bantu builds, all six critique Phase 1.</dd>
+        <dt>Rung:</dt> <dd>DRAFT</dd>
+        <dt>Status:</dt> <dd>In progress — listed in In progress in the board file. Phase 1 critique, score 0-100, pass 80+, up to 3 rounds; Phase 2 Mario review; Phase 3 wrap and docs if Mario confirms. No payable price set.</dd>
+      </dl>
+    </article>
+  </section>
+
+  <section class="col">
+    <h2><span class="dot dot-red"></span>Blocked</h2>
+    <article class="card blocked">
+      <div class="row"><span class="id">T-002</span><span class="status status-blocked">Blocked</span></div>
+      <div class="title">Verify tool for nomi-prototype: seed, run, screenshot, check, PR.</div>
+      <dl>
+        <dt>Owner:</dt> <dd>subagent, then main agent</dd>
+        <dt>Rung:</dt> <dd>DRAFT</dd>
+        <dt>Status:</dt> <dd>Blocked — GitHub App has no write access to marioprasetyo/nomi-prototype, 403 on branch creation. Needs install/select on that repo, then retry.</dd>
+      </dl>
+    </article>
+  </section>
+
+  <section class="col">
+    <h2><span class="dot dot-green"></span>Done</h2>
+    <article class="card done">
+      <div class="row"><span class="id">T-001</span><span class="status status-done">Done</span></div>
+      <div class="title">Team rules: ROLE / INPUTS / OUTPUT / DONE WHEN, rungs, and adapted non-code checklist.</div>
+      <dl>
+        <dt>Owner:</dt> <dd>main agent</dd>
+        <dt>Rung:</dt> <dd>DRAFT</dd>
+        <dt>Status:</dt> <dd>Done — all six bots confirmed T-001 in their chats, checklist [1][2][3] passed.</dd>
+      </dl>
+    </article>
+  </section>
+</div>
+
+<footer>
+Sources: first learning via Nara, from Jelajah first learning note; ~/workspace/team/board.md, via Rapi via Nara; ~/workspace/team/price-list.md, empty, no price quoted; dark Nomi theme from ~/workspace/nomi-verify/verify.config.json and README, dark, desktop 1280x800; human-centric, high-fidelity, responsive from https://marioprasetyo.framer.website/about. Date: 2026-11-17.
+</footer>
+</main>
+</body>
+</html>
