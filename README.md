@@ -18,7 +18,15 @@ functional typography, content hierarchy, focused and efficient, a dark
 minimalist dashboard and issue tracker. The board copies its layout, palette,
 and type decisions, not its copy or brand. Loading uses a skeleton reveal,
 moving a ticket to Done shows a success check, and status chips filter the
-board, from Transitions.dev and Beautiful UI. Every ticket card shows its
+board, from Transitions.dev and Beautiful UI. The board itself uses the
+Kanban Board primitives in src/components/ui/kanban-board.tsx, adapted from
+Kanban Board by victor-teles, 21st.dev, published 2026-10-18: FLIP
+drag-and-drop, keyboard movement with Ctrl + Left / Right, empty states, and
+a drop slot that grows to the card's height, no dnd-kit, value and
+onValueChange. The original source comes with a free 21st.dev account, so
+the primitives were built to its published API. Dragging or moving a card
+between columns writes the new status to Supabase through onValueChange.
+Every ticket card shows its
 category as a neutral chip next to the Ticket ID, from the 17 categories
 Mario approved, Product, Design, Dev, Team, Skill, Social, Explore, Finance,
 Misc, Marketing, Sales, Research, Content, Operations, Personal, Learning,
