@@ -3,6 +3,18 @@ import { supabase, supabaseConfigured, supabaseUrl } from './lib/supabase'
 import type { Category, Rung, Status, Ticket } from './lib/supabase'
 import { CATEGORIES, RUNGS, STATUSES } from './lib/supabase'
 import TaskRow, { liveStatusFor, TaskRowSkeleton } from './components/TaskRow'
+import {
+  KanbanBoard,
+  KanbanBoardCard,
+  KanbanBoardCards,
+  KanbanBoardColumn,
+  KanbanBoardColumnCount,
+  KanbanBoardColumnEmpty,
+  KanbanBoardColumnHeader,
+  KanbanBoardColumnTitle,
+} from './components/ui/kanban-board'
+import type { KanbanBoardValue } from './components/ui/kanban-board'
+import { buildValue, findMove } from './lib/kanban-value'
 import { Button } from './components/ui/button'
 
 // T-004. Task board — Mario. Vite + React + TypeScript, Tailwind v4,
@@ -54,7 +66,6 @@ export default function App() {
   const [banner, setBanner] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
-  const [dragOver, setDragOver] = useState('')
   const [filter, setFilter] = useState<'All' | Status>('All')
   const [justDoneId, setJustDoneId] = useState<string | null>(null)
   const editFormRef = useRef<HTMLFormElement | null>(null)
@@ -198,6 +209,16 @@ export default function App() {
       justDoneTimer.current = window.setTimeout(() => setJustDoneId(null), 1500)
     }
     await load()
+  }
+
+  // Kanban onValueChange, T-004: the board is controlled by Supabase state,
+  // so the new value is diffed against the tickets, and the one card that
+  // changed column is written to Supabase. A reorder inside one column
+  // reports no move, because the database has no position to write.
+  function handleValueChange(next: KanbanBoardValue) {
+    const move = findMove(buildValue(tickets), next)
+    if (!move) return
+    void changeStatus(move.id, move.to)
   }
 
   function openEdit(t: Ticket) {
@@ -344,32 +365,26 @@ export default function App() {
           )
         })}
       </div>
-      <div className="board">
+      <p className="sub">
+        Drag a card between columns, or focus a card and press Ctrl + Left / Right to move
+        it. The status menu on each card still works too.
+      </p>
+      <KanbanBoard value={buildValue(tickets)} onValueChange={handleValueChange}>
         {STATUSES.map((status) => (
-          <section
+          <KanbanBoardColumn
             key={status}
-            className={
-              'col' +
-              (dragOver === status ? ' drag-over' : '') +
-              (filter !== 'All' && filter !== status ? ' opacity-40' : '')
-            }
-            data-status={status}
-            onDragOver={(e) => {
-              e.preventDefault()
-              setDragOver(status)
-            }}
-            onDragLeave={() => setDragOver('')}
-            onDrop={async (e) => {
-              e.preventDefault()
-              setDragOver('')
-              await changeStatus(e.dataTransfer.getData('text/plain'), status)
-            }}
+            value={status}
+            label={status}
+            className={filter !== 'All' && filter !== status ? ' opacity-40' : ''}
           >
-            <h2>
-              <span className={'dot dot-' + statusDot(status)}></span>
-              {status}
-            </h2>
-            <div className="cards">
+            <KanbanBoardColumnHeader>
+              <KanbanBoardColumnTitle>
+                <span className={'dot dot-' + statusDot(status)}></span>
+                {status}
+              </KanbanBoardColumnTitle>
+              <KanbanBoardColumnCount />
+            </KanbanBoardColumnHeader>
+            <KanbanBoardCards>
               {loading ? (
                 <>
                   <TaskRowSkeleton />
@@ -379,26 +394,30 @@ export default function App() {
                 tickets
                   .filter((t) => t.status === status)
                   .map((t) => (
-                    <TaskRow
-                      key={t.ticket_id}
-                      id={t.ticket_id}
-                      title={t.title}
-                      owner={t.owner || ''}
-                      rung={t.rung || ''}
-                      status={t.status}
-                      category={t.category || 'Misc'}
-                      liveStatus={liveStatusFor(t.status)}
-                      blockReason={t.block_reason || undefined}
-                      justCompleted={justDoneId === t.ticket_id}
-                      onChangeStatus={changeStatus}
-                      onEdit={() => openEdit(t)}
-                    />
+                    <KanbanBoardCard key={t.ticket_id} value={t.ticket_id} label={t.title}>
+                      <TaskRow
+                        id={t.ticket_id}
+                        title={t.title}
+                        owner={t.owner || ''}
+                        rung={t.rung || ''}
+                        status={t.status}
+                        category={t.category || 'Misc'}
+                        liveStatus={liveStatusFor(t.status)}
+                        blockReason={t.block_reason || undefined}
+                        justCompleted={justDoneId === t.ticket_id}
+                        onChangeStatus={changeStatus}
+                        onEdit={() => openEdit(t)}
+                      />
+                    </KanbanBoardCard>
                   ))
               )}
-            </div>
-          </section>
+            </KanbanBoardCards>
+            {!loading && (
+              <KanbanBoardColumnEmpty>No tickets in {status}.</KanbanBoardColumnEmpty>
+            )}
+          </KanbanBoardColumn>
         ))}
-      </div>
+      </KanbanBoard>
 
       {editing && editForm && (
         <form ref={editFormRef} className="panel show" onSubmit={saveEdit}>
