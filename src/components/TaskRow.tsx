@@ -14,6 +14,9 @@ import { STATUSES } from '../lib/supabase'
 // One transition per state change: the card border and background.
 // Accessible: status is text as well as colour, keyboard focus is visible,
 // the blocked reason is readable by a screen reader.
+// Drag, focus, and the card label are owned by the KanbanBoardCard wrapper
+// in components/ui/kanban-board.tsx, not by this card, so this card stays
+// a plain presentational card that works on its own too.
 export type LiveStatus = 'running' | 'failed' | 'completed' | 'queued'
 
 export function liveStatusFor(status: Status): LiveStatus {
@@ -98,13 +101,9 @@ export default function TaskRow({
   return (
     <article
       className={cn(
-        'rounded-[10px] border border-border border-l-4 bg-card p-3 mb-3 cursor-grab transition-colors focus-visible:outline-2 focus-visible:outline-working',
+        'rounded-[10px] border border-border border-l-4 bg-card p-3 mb-3 transition-colors focus-visible:outline-2 focus-visible:outline-working',
         cardBorder,
       )}
-      draggable
-      onDragStart={(e) => e.dataTransfer.setData('text/plain', id)}
-      tabIndex={0}
-      aria-label={`${id}, ${title}, category ${category}, status ${status}`}
     >
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-extrabold text-[15px]">{id}</span>
